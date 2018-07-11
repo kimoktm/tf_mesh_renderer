@@ -14,10 +14,6 @@
 
 """Common functions for the rasterizer and mesh renderer tests."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import numpy as np
 import tensorflow as tf
@@ -91,7 +87,8 @@ def expect_image_file_and_render_are_near(test_instance,
     pixel_error_threshold: pixel values are considered to differ if their
       difference exceeds this amount. Range is 0.0 - 1.0.
   """
-  baseline_bytes = open(baseline_path, 'rb').read()
+  with open(baseline_path, 'rb') as f:
+    baseline_bytes = f.read()
   baseline_image = sess.run(tf.image.decode_png(baseline_bytes))
 
   test_instance.assertEqual(baseline_image.shape, result_image.shape,

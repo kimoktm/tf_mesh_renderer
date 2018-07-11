@@ -14,17 +14,13 @@
 
 """Differentiable triangle rasterizer."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import tensorflow as tf
 
 
 rasterize_triangles_module = tf.load_op_library(
-    os.path.join(os.environ['TEST_SRCDIR'],
-    'tf_mesh_renderer/mesh_renderer/kernels/rasterize_triangles_kernel.so'))
+    os.path.join(os.path.dirname(os.path.realpath(__file__)),
+    'kernels', 'rasterize_triangles_kernel.so'))
 
 
 # This epsilon should be smaller than any valid barycentric reweighting factor
@@ -108,7 +104,7 @@ def rasterize_triangles(vertices, attributes, triangles, projection_matrices,
 
   per_image_uncorrected_barycentric_coordinates = []
   per_image_vertex_ids = []
-  for im in xrange(vertices.shape[0]):
+  for im in range(vertices.shape[0]):
     barycentric_coords, triangle_ids, _ = (
         rasterize_triangles_module.rasterize_triangles(
             normalized_device_coordinates[im, :, :], triangles, image_width,

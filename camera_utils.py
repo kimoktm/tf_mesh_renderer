@@ -14,10 +14,6 @@
 
 """Collection of TF functions for managing 3D camera matrices."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import math
 import tensorflow as tf
 
@@ -82,7 +78,7 @@ def look_at(eye, center, world_up):
   batch_size = center.shape[0].value
   vector_degeneracy_cutoff = 1e-6
   forward = center - eye
-  forward_norm = tf.norm(forward, ord='euclidean', axis=1, keep_dims=True)
+  forward_norm = tf.norm(forward, ord='euclidean', axis=1, keepdims=True)
   tf.assert_greater(
       forward_norm,
       vector_degeneracy_cutoff,
@@ -90,7 +86,7 @@ def look_at(eye, center, world_up):
   forward = tf.divide(forward, forward_norm)
 
   to_side = tf.cross(forward, world_up)
-  to_side_norm = tf.norm(to_side, ord='euclidean', axis=1, keep_dims=True)
+  to_side_norm = tf.norm(to_side, ord='euclidean', axis=1, keepdims=True)
   tf.assert_greater(
       to_side_norm,
       vector_degeneracy_cutoff,

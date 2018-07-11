@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import math
 import os
 
@@ -30,8 +26,8 @@ import test_utils
 class RenderTest(tf.test.TestCase):
 
   def setUp(self):
-    self.test_data_directory = (
-        'mesh_renderer/test_data/')
+    self.test_data_directory = \
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_data')
 
     tf.reset_default_graph()
     # Set up a basic cube centered at the origin, with vertex normals pointing
@@ -40,7 +36,7 @@ class RenderTest(tf.test.TestCase):
         [[-1, -1, 1], [-1, -1, -1], [-1, 1, -1], [-1, 1, 1], [1, -1, 1],
          [1, -1, -1], [1, 1, -1], [1, 1, 1]],
         dtype=tf.float32)
-    self.cube_normals = tf.nn.l2_normalize(self.cube_vertices, dim=1)
+    self.cube_normals = tf.nn.l2_normalize(self.cube_vertices, axis=1)
     self.cube_triangles = tf.constant(
         [[0, 1, 2], [2, 3, 0], [3, 2, 6], [6, 7, 3], [7, 6, 5], [5, 4, 7],
          [4, 5, 1], [1, 0, 4], [5, 6, 2], [2, 1, 5], [7, 4, 0], [0, 3, 7]],
@@ -174,7 +170,7 @@ class RenderTest(tf.test.TestCase):
       images, broadcasted_images = sess.run(
           [tonemapped_renders, tonemapped_broadcasted_renders], feed_dict={})
 
-      for image_id in xrange(images.shape[0]):
+      for image_id in range(images.shape[0]):
         target_image_name = 'Colored_Cube_%i.png' % image_id
         baseline_image_path = os.path.join(self.test_data_directory,
                                            target_image_name)

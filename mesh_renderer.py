@@ -14,10 +14,6 @@
 
 """Differentiable 3-D rendering of a triangle mesh."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import tensorflow as tf
 
 import camera_utils
@@ -101,7 +97,7 @@ def phong_shader(normals,
       axis=1)  # [batch_size, light_count, pixel_count, 3]
   directions_to_lights = tf.nn.l2_normalize(
       tf.expand_dims(light_positions, axis=2) - per_light_pixel_positions,
-      dim=3)  # [batch_size, light_count, pixel_count, 3]
+      axis=3)  # [batch_size, light_count, pixel_count, 3]
   # The specular component should only contribute when the light and normal
   # face one another (i.e. the dot product is nonnegative):
   normals_dot_lights = tf.clip_by_value(
@@ -122,9 +118,9 @@ def phong_shader(normals,
     mirror_reflection_direction = tf.nn.l2_normalize(
         2.0 * tf.expand_dims(normals_dot_lights, axis=3) * tf.expand_dims(
             normals, axis=1) - directions_to_lights,
-        dim=3)
+        axis=3)
     direction_to_camera = tf.nn.l2_normalize(
-        camera_position - pixel_positions, dim=2)
+        camera_position - pixel_positions, axis=2)
     reflection_direction_dot_camera_direction = tf.reduce_sum(
         tf.expand_dims(direction_to_camera, axis=1) *
         mirror_reflection_direction,
@@ -132,7 +128,7 @@ def phong_shader(normals,
     # The specular component should only contribute when the reflection is
     # external:
     reflection_direction_dot_camera_direction = tf.clip_by_value(
-        tf.nn.l2_normalize(reflection_direction_dot_camera_direction, dim=2),
+        tf.nn.l2_normalize(reflection_direction_dot_camera_direction, axis=2),
         0.0, 1.0)
     # The specular component should also only contribute when the diffuse
     # component contributes:
@@ -374,7 +370,7 @@ def mesh_renderer(vertices,
 
   # Extract the interpolated vertex attributes from the pixel buffer and
   # supply them to the shader:
-  pixel_normals = tf.nn.l2_normalize(pixel_attributes[:, :, :, 0:3], dim=3)
+  pixel_normals = tf.nn.l2_normalize(pixel_attributes[:, :, :, 0:3], axis=3)
   pixel_positions = pixel_attributes[:, :, :, 3:6]
   diffuse_colors = pixel_attributes[:, :, :, 6:9]
   if specular_colors is not None:

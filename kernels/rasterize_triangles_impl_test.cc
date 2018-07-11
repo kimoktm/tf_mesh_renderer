@@ -17,8 +17,6 @@
 #include "gtest/gtest.h"
 #include "rasterize_triangles_impl.h"
 
-#include "third_party/lodepng.h"
-
 namespace tf_mesh_renderer {
 namespace {
 
@@ -33,18 +31,6 @@ std::string GetRunfilesRelativePath(const std::string& filename) {
   return srcdir + test_data + filename;
 }
 
-void LoadPng(const std::string& filename, std::vector<uint8>* output) {
-  unsigned width, height;
-  unsigned error = lodepng::decode(*output, width, height, filename.c_str());
-  ASSERT_TRUE(error == 0) << "Decoder error: " << lodepng_error_text(error);
-}
-
-void SavePng(const std::string& filename, const std::vector<uint8>& image) {
-  unsigned error =
-      lodepng::encode(filename.c_str(), image, kImageWidth, kImageHeight);
-  ASSERT_TRUE(error == 0) << "Encoder error: " << lodepng_error_text(error);
-}
-
 void FloatRGBToUint8RGBA(const std::vector<float>& input,
                          std::vector<uint8>* output) {
   output->resize(kImageHeight * kImageWidth * 4);
@@ -57,25 +43,6 @@ void FloatRGBToUint8RGBA(const std::vector<float>& input,
       (*output)[(y * kImageWidth + x) * 4 + 3] = 255;
     }
   }
-}
-
-void ExpectImageFileAndImageAreEqual(const std::string& baseline_file,
-                                     const std::vector<float>& result,
-                                     const std::string& comparison_name,
-                                     const std::string& failure_message) {
-  std::vector<uint8> baseline_rgba, result_rgba;
-  LoadPng(GetRunfilesRelativePath(baseline_file), &baseline_rgba);
-  FloatRGBToUint8RGBA(result, &result_rgba);
-
-  const bool images_match = baseline_rgba == result_rgba;
-
-  if (!images_match) {
-    const std::string result_output_path =
-        "/tmp/" + comparison_name + "_result.png";
-    SavePng(result_output_path, result_rgba);
-  }
-
-  EXPECT_TRUE(images_match) << failure_message;
 }
 
 class RasterizeTrianglesImplTest : public ::testing::Test {

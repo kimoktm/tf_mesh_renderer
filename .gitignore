@@ -1,1 +1,8 @@
 bazel*
+
+__pycache__
+*.pyc
+*.so
+
+.vscode
+.idea
