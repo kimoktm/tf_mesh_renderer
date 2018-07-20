@@ -25,7 +25,8 @@ import rasterize_triangles
 class RenderTest(tf.test.TestCase):
 
   def setUp(self):
-    self.test_data_directory = 'test_data/'
+    self.test_data_directory = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), 'test_data')
 
     tf.reset_default_graph()
     self.cube_vertex_positions = tf.constant(
