@@ -14,10 +14,14 @@
 
 """Differentiable 3-D rendering of a triangle mesh."""
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import tensorflow as tf
 
-import camera_utils
-import rasterize_triangles
+from . import camera_utils
+from . import rasterize_triangles
 
 
 def phong_shader(normals,

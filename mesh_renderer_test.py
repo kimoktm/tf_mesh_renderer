@@ -12,15 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import math
 import os
 
 import numpy as np
 import tensorflow as tf
 
-import camera_utils
-import mesh_renderer
-import test_utils
+from . import camera_utils
+from . import mesh_renderer
+from . import test_utils
 
 
 class RenderTest(tf.test.TestCase):
