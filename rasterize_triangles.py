@@ -181,3 +181,13 @@ def _rasterize_triangles_grad(op, df_dbarys, df_dids, df_dz):
   return rasterize_triangles_module.rasterize_triangles_grad(
       op.inputs[0], op.inputs[1], op.outputs[0], op.outputs[1], df_dbarys,
       op.get_attr('image_width'), op.get_attr('image_height')), None
+
+
+@tf.RegisterGradient('RasterizeTrianglesGrad')
+def _rasterize_triangles_grad_grad(op, df_dvertices):
+
+  df_dfdbarys = rasterize_triangles_module.rasterize_triangles_grad_grad(
+      op.inputs[0], op.inputs[1], op.inputs[2], op.inputs[3], df_dvertices,
+      op.get_attr('image_width'), op.get_attr('image_height'))
+
+  return None, None, None, None, df_dfdbarys
