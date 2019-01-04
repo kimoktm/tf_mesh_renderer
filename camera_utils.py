@@ -44,8 +44,8 @@ def perspective(aspect_ratio, fov_y, near_clip, far_clip):
   # and adds the half-angle factor of .5.
   focal_lengths_y = 1.0 / tf.tan(fov_y * (math.pi / 360.0))
   depth_range = far_clip - near_clip
-  p_22 = -(far_clip + near_clip) / depth_range
-  p_23 = -2.0 * (far_clip * near_clip / depth_range)
+  p_22 = (far_clip + near_clip) / depth_range
+  p_23 = 2.0 * (far_clip * near_clip / depth_range)
 
   zeros = tf.zeros_like(p_23, dtype=tf.float32)
   # pyformat: disable
@@ -83,19 +83,19 @@ def look_at(eye, center, world_up):
   vector_degeneracy_cutoff = 1e-6
   forward = center - eye
   forward_norm = tf.norm(forward, ord='euclidean', axis=1, keepdims=True)
-  tf.assert_greater(
-      forward_norm,
-      vector_degeneracy_cutoff,
-      message='Camera matrix is degenerate because eye and center are close.')
+  # tf.assert_greater(
+  #     forward_norm,
+  #     vector_degeneracy_cutoff,
+  #     message='Camera matrix is degenerate because eye and center are close.')
   forward = tf.divide(forward, forward_norm)
 
   to_side = tf.cross(forward, world_up)
   to_side_norm = tf.norm(to_side, ord='euclidean', axis=1, keepdims=True)
-  tf.assert_greater(
-      to_side_norm,
-      vector_degeneracy_cutoff,
-      message='Camera matrix is degenerate because up and gaze are close or'
-      'because up is degenerate.')
+  # tf.assert_greater(
+  #     to_side_norm,
+  #     vector_degeneracy_cutoff,
+  #     message='Camera matrix is degenerate because up and gaze are close or'
+  #     'because up is degenerate.')
   to_side = tf.divide(to_side, to_side_norm)
   cam_up = tf.cross(to_side, forward)
 

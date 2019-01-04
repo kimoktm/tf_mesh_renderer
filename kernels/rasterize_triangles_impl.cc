@@ -78,6 +78,7 @@ void RasterizeTrianglesImpl(const float* vertices, const int32* triangles,
                             float* barycentric_coordinates, float* z_buffer) {
   const float half_image_width = 0.5 * image_width;
   const float half_image_height = 0.5 * image_height;
+
   for (int32 triangle_id = 0; triangle_id < triangle_count; ++triangle_id) {
     const int32 v0_x_id = 3 * triangles[3 * triangle_id];
     const int32 v1_x_id = 3 * triangles[3 * triangle_id + 1];
@@ -140,7 +141,8 @@ void RasterizeTrianglesImpl(const float* vertices, const int32* triangles,
 
         // Skip the pixel if it is farther than the current z-buffer pixel or
         // beyond the near or far clipping plane.
-        if (z < -1.0 || z > 1.0 || z > z_buffer[pixel_idx]) {
+        //if (z < -1.0 || z > 1.0 || z > z_buffer[pixel_idx]) {
+        if (z < z_buffer[pixel_idx]) {
           continue;
         }
 

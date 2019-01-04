@@ -210,6 +210,7 @@ def mesh_renderer(vertices,
                   specular_colors=None,
                   shininess_coefficients=None,
                   ambient_color=None,
+                  perspective=True,
                   fov_y=40.0,
                   near_clip=0.01,
                   far_clip=10.0):
@@ -363,13 +364,14 @@ def mesh_renderer(vertices,
   camera_matrices = camera_utils.look_at(camera_position, camera_lookat,
                                          camera_up)
 
-  perspective_transforms = camera_utils.perspective(image_width / image_height,
-                                                    fov_y, near_clip, far_clip)
+  if perspective:
+    perspective_transforms = camera_utils.perspective(image_width / image_height,
+                                                      fov_y, near_clip, far_clip)
 
-  clip_space_transforms = tf.matmul(perspective_transforms, camera_matrices)
+    camera_matrices = tf.matmul(perspective_transforms, camera_matrices)
 
   pixel_attributes = rasterize_triangles.rasterize_triangles(
-      vertices, vertex_attributes, triangles, clip_space_transforms,
+      vertices, vertex_attributes, triangles, camera_matrices,
       image_width, image_height, [-1] * vertex_attributes.shape[2].value)
 
   # Extract the interpolated vertex attributes from the pixel buffer and

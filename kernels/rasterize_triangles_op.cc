@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <limits>
 
 #include "rasterize_triangles_impl.h"
 #include "tensorflow/core/framework/op.h"
@@ -124,10 +125,10 @@ class RasterizeTrianglesOp : public OpKernel {
                                 &z_buffer_tensor));
 
     // Clear barycentric and triangle id buffers to 0.
-    // Clear z-buffer to 1 (the farthest NDC z value).
+    // Clear z-buffer to -INF (the farthest NDC z value).
     barycentric_tensor->flat<float>().setZero();
     triangle_ids_tensor->flat<int32>().setZero();
-    z_buffer_tensor->flat<float>().setConstant(1);
+    z_buffer_tensor->flat<float>().setConstant(-std::numeric_limits<float>::max());
 
     RasterizeTrianglesImpl(vertices, triangles, triangle_count, image_width_,
                            image_height_,
