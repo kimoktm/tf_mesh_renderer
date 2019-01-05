@@ -1,3 +1,9 @@
+- Added Orthographical projection
+- Added 2nd Order derivatives
+- Flipped Z-buffer (camera now points to -Z axis)
+- ISSUE with orthographical non-square aspect ratio
+
+
 Fork of project at https://github.com/google/tf_mesh_renderer, migrated to python3 and removed bazel build.
 
 ## tf_mesh_renderer
