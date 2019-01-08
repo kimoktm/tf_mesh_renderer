@@ -174,7 +174,7 @@ def rasterize_triangles(vertices, attributes, triangles, projection_matrices,
   attributes_with_background = (
       alphas * attribute_images + (1.0 - alphas) * background_value)
 
-  return attributes_with_background
+  return attributes_with_background, normalized_device_coordinates
 
 
 @tf.RegisterGradient('RasterizeTriangles')

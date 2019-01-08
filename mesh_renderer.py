@@ -164,6 +164,31 @@ def phong_shader(normals,
   return tf.reverse(tf.concat([rgb_images, alpha_images], axis=3), axis=[1])
 
 
+
+def flat_shader(diffuse_colors, alphas):
+  """Computes pixelwise lighting from rasterized buffers with the Lambert model.
+
+  Args:
+    diffuse_colors: a 4D float32 tensor with shape [batch_size, image_height,
+        image_width, 3]. The inner dimension is the diffuse RGB coefficients at
+        a pixel in the range [0, 1].
+  Returns:
+    A 4D float32 tensor of shape [batch_size, image_height, image_width, 4]
+    containing the lit RGBA color values for each image at each pixel. Colors
+    are in the range [0,1].
+
+  Raises:
+    ValueError: An invalid argument to the method is detected.
+  """
+
+  batch_size, image_height, image_width = [s.value for s in diffuse_colors.shape[:-1]]
+
+  alpha_images = tf.reshape(alphas, [batch_size, image_height, image_width, 1])
+
+  return tf.reverse(tf.concat([diffuse_colors, alpha_images], axis=3), axis=[1])
+
+
+
 def tone_mapper(image, gamma):
   """Applies gamma correction to the input image.
 
@@ -196,24 +221,25 @@ def tone_mapper(image, gamma):
   return tf.clip_by_value(scaled_image, 0.0, 1.0)
 
 
-def mesh_renderer(vertices,
-                  triangles,
-                  normals,
-                  diffuse_colors,
-                  camera_position,
-                  camera_lookat,
-                  camera_up,
-                  light_positions,
-                  light_intensities,
-                  image_width,
-                  image_height,
-                  specular_colors=None,
-                  shininess_coefficients=None,
-                  ambient_color=None,
-                  perspective=True,
-                  fov_y=40.0,
-                  near_clip=0.01,
-                  far_clip=10.0):
+
+def render(vertices,
+          triangles,
+          normals,
+          diffuse_colors,
+          camera_position,
+          camera_lookat,
+          camera_up,
+          image_width,
+          image_height,
+          light_positions=None,
+          light_intensities=None,
+          specular_colors=None,
+          shininess_coefficients=None,
+          ambient_color=None,
+          perspective=True,
+          fov_y=40.0,
+          near_clip=0.01,
+          far_clip=10.0):
   """Renders an input scene using phong shading, and returns an output image.
 
   Args:
@@ -281,12 +307,6 @@ def mesh_renderer(vertices,
   batch_size = vertices.shape[0].value
   if len(normals.shape) != 3:
     raise ValueError('Normals must have shape [batch_size, vertex_count, 3].')
-  if len(light_positions.shape) != 3:
-    raise ValueError(
-        'Light_positions must have shape [batch_size, light_count, 3].')
-  if len(light_intensities.shape) != 3:
-    raise ValueError(
-        'Light_intensities must have shape [batch_size, light_count, 3].')
   if len(diffuse_colors.shape) != 3:
     raise ValueError(
         'vertex_diffuse_colors must have shape [batch_size, vertex_count, 3].')
@@ -307,6 +327,14 @@ def mesh_renderer(vertices,
     camera_up = tf.tile(tf.expand_dims(camera_up, axis=0), [batch_size, 1])
   elif camera_up.get_shape().as_list() != [batch_size, 3]:
     raise ValueError('Camera_up must have shape [batch_size, 3]')
+  if light_positions is not None:
+    if len(light_positions.shape) != 3:
+      raise ValueError(
+          'Light_positions must have shape [batch_size, light_count, 3].')
+  if light_intensities is not None:
+    if len(light_intensities.shape) != 3:
+      raise ValueError(
+          'Light_intensities must have shape [batch_size, light_count, 3].')
   if isinstance(fov_y, float):
     fov_y = tf.constant(batch_size * [fov_y], dtype=tf.float32)
   elif not fov_y.get_shape().as_list():
@@ -370,7 +398,8 @@ def mesh_renderer(vertices,
 
     camera_matrices = tf.matmul(perspective_transforms, camera_matrices)
 
-  pixel_attributes = rasterize_triangles.rasterize_triangles(
+
+  pixel_attributes, proj_vertices = rasterize_triangles.rasterize_triangles(
       vertices, vertex_attributes, triangles, camera_matrices,
       image_width, image_height, [-1] * vertex_attributes.shape[2].value)
 
@@ -379,26 +408,30 @@ def mesh_renderer(vertices,
   pixel_normals = tf.nn.l2_normalize(pixel_attributes[:, :, :, 0:3], axis=3)
   pixel_positions = pixel_attributes[:, :, :, 3:6]
   diffuse_colors = pixel_attributes[:, :, :, 6:9]
-  if specular_colors is not None:
-    specular_colors = pixel_attributes[:, :, :, 9:12]
-    # Retrieve the interpolated shininess coefficients if necessary, or just
-    # reshape our input for broadcasting:
-    if len(shininess_coefficients.shape) == 2:
-      shininess_coefficients = pixel_attributes[:, :, :, 12]
-    else:
-      shininess_coefficients = tf.reshape(shininess_coefficients, [-1, 1, 1])
-
   pixel_mask = tf.cast(tf.reduce_any(diffuse_colors >= 0, axis=3), tf.float32)
 
-  renders = phong_shader(
-      normals=pixel_normals,
-      alphas=pixel_mask,
-      pixel_positions=pixel_positions,
-      light_positions=light_positions,
-      light_intensities=light_intensities,
-      diffuse_colors=diffuse_colors,
-      camera_position=camera_position if specular_colors is not None else None,
-      specular_colors=specular_colors,
-      shininess_coefficients=shininess_coefficients,
-      ambient_color=ambient_color)
-  return renders
+  if light_positions is not None:
+    if specular_colors is not None:
+      specular_colors = pixel_attributes[:, :, :, 9:12]
+      # Retrieve the interpolated shininess coefficients if necessary, or just
+      # reshape our input for broadcasting:
+      if len(shininess_coefficients.shape) == 2:
+        shininess_coefficients = pixel_attributes[:, :, :, 12]
+      else:
+        shininess_coefficients = tf.reshape(shininess_coefficients, [-1, 1, 1])
+
+    renders = phong_shader(
+        normals=pixel_normals,
+        alphas=pixel_mask,
+        pixel_positions=pixel_positions,
+        light_positions=light_positions,
+        light_intensities=light_intensities,
+        diffuse_colors=diffuse_colors,
+        camera_position=camera_position if specular_colors is not None else None,
+        specular_colors=specular_colors,
+        shininess_coefficients=shininess_coefficients,
+        ambient_color=ambient_color)
+  else:
+    renders = flat_shader(diffuse_colors=diffuse_colors, alphas=pixel_mask)
+
+  return renders, proj_vertices
